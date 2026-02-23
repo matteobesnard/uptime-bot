@@ -24,7 +24,7 @@ def connect_and_lurk():
         
         # Petit délai pour laisser Twitch traiter la connexion
         time.sleep(3)
-        send_msg(sock, "slt")
+        send_msg(sock, "!myuptime")
         print(f"[*] Connecté en tant que {NICK} sur {CHAN}")
         
     except Exception as e:
