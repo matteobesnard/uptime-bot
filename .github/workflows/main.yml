@@ -1,8 +1,10 @@
 name: Twitch Bot
+
 on:
   schedule:
     - cron: '0 */5 * * *'
   workflow_dispatch:
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -13,6 +15,7 @@ jobs:
           python-version: '3.9'
       - name: Run Bot
         env:
+          # On a bien remplacé TWITCH_NICK par TWITCH_NAME ici
           TWITCH_NAME: ${{ secrets.TWITCH_NAME }}
           TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
         run: python -u bot.py
