@@ -3,10 +3,14 @@ import os
 import time
 
 # --- CONFIGURATION ---
+# Assure-toi que ces noms correspondent à tes "Secrets" GitHub
 NICK = os.getenv("TWITCH_NAME")
 PASS = os.getenv("TWITCH_TOKEN")
-CHAN = "#SachaSLM" # <--- METS LE NOM DU STREAMER ICI (garde le #)
+CHAN = "#sachaslm" # Nom du streamer d'après ton image
 # ---------------------
+
+def send_msg(sock, msg):
+    sock.send(f"PRIVMSG {CHAN} :{msg}\n".encode('utf-8'))
 
 def connect_and_lurk():
     sock = socket.socket()
@@ -15,10 +19,15 @@ def connect_and_lurk():
     sock.send(f"NICK {NICK}\n".encode('utf-8'))
     sock.send(f"JOIN {CHAN}\n".encode('utf-8'))
     
-    print(f"[*] Connecté au chat de {CHAN}. Ton uptime grimpe !")
+    # Message de confirmation envoyé dans le chat
+    # On attend 2 secondes pour laisser la connexion s'établir
+    time.sleep(2)
+    send_msg(sock, "!myuptime")
     
-    # Le script tourne pendant 5 heures
+    print(f"[*] Message envoyé. Connecté au chat de {CHAN}.")
+    
     start_time = time.time()
+    # Le script tourne pendant 5 heures (18000 secondes)
     while time.time() - start_time < 18000: 
         try:
             resp = sock.recv(2048).decode('utf-8')
