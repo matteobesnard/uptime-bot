@@ -15,4 +15,4 @@ jobs:
         env:
           TWITCH_NAME: ${{ secrets.TWITCH_NAME }}
           TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
-        run: python bot.py
+        run: python -u bot.py
