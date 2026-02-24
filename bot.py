@@ -14,8 +14,7 @@ COMMAND_ALIASES = [
 ]
 
 API_SOURCES = {
-    "DecAPI": f"https://decapi.me/twitch/uptime/{CHAN.replace('#', '')}",
-    "TwitchCenter": f"https://twitch.center/customapi/uptime?user={CHAN.replace('#', '')}"
+    "DecAPI": f"https://decapi.me/twitch/uptime/{CHAN.replace('#', '')}"
 }
 
 def send_msg(sock, msg):
