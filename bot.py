@@ -1,28 +1,27 @@
-import socket
-import os
-import time
-import urllib.request
+import socket, os, time, urllib.request, random
 
 # --- CONFIGURATION ---
-# Utilisation des secrets configurés dans GitHub
 NICK = os.getenv("TWITCH_NAME")
 PASS = os.getenv("TWITCH_TOKEN")
-CHAN = "#sachaslm" # Nom de la chaîne confirmé sur ton écran
-# ---------------------
+CHAN = "#sachaslm" 
+
+# On utilise deux APIs différentes pour la rapidité
+API_URLS = [
+    f"https://decapi.me/twitch/uptime/{CHAN.replace('#', '')}",
+    f"https://api.crunchyroll.moe/twitch/uptime/{CHAN.replace('#', '')}" # Source alternative
+]
 
 def send_msg(sock, msg):
     sock.send(f"PRIVMSG {CHAN} :{msg}\n".encode('utf-8'))
 
-def is_stream_live():
-    """Vérifie si le stream est en ligne via DecAPI"""
-    try:
-        user = CHAN.replace("#", "")
-        url = f"https://decapi.me/twitch/uptime/{user}"
-        # Timeout de 2 secondes pour ne pas bloquer le script
-        response = urllib.request.urlopen(url, timeout=2).read().decode('utf-8')
-        return "offline" not in response.lower()
-    except:
-        return False
+def check_live_multi():
+    for url in API_URLS:
+        try:
+            response = urllib.request.urlopen(url, timeout=2).read().decode('utf-8')
+            if "offline" not in response.lower() and "error" not in response.lower():
+                return True
+        except: continue
+    return False
 
 def connect_and_lurk():
     sock = socket.socket()
@@ -32,42 +31,33 @@ def connect_and_lurk():
         sock.send(f"PASS {PASS}\n".encode('utf-8'))
         sock.send(f"NICK {NICK}\n".encode('utf-8'))
         sock.send(f"JOIN {CHAN}\n".encode('utf-8'))
-        print(f"[*] Connecté en tant que {NICK} sur {CHAN}")
-    except Exception as e:
-        print(f"[!] Erreur de connexion : {e}")
-        return
+    except: return
 
-    has_sent_uptime = False
+    has_sent_initial = False
     start_time = time.time()
     last_check_time = 0
 
-    # Le script tourne pendant 5 heures (limite des serveurs GitHub Actions)
-    while time.time() - start_time < 18000:
+    while time.time() - start_time < 19200: # 5h20
         current_time = time.time()
 
-        # --- VÉRIFICATION TOUTES LES 5 SECONDES ---
-        if current_time - last_check_time >= 5:
+        # On vérifie toutes les 2 SECONDES au lieu de 5
+        if current_time - last_check_time >= 2:
             last_check_time = current_time
-            if is_stream_live():
-                if not has_sent_uptime:
-                    print(f"[!] LIVE détecté ! Envoi de !myuptime...")
-                    send_msg(sock, "cc, comment tu vas ?")
-                    has_sent_uptime = True 
+            if check_live_multi():
+                if not has_sent_initial:
+                    # REACTION INSTANTANEE
+                    send_msg(sock, "yo")
+                    time.sleep(1) # Petit délai pour Wizebot
+                    send_msg(sock, "cv ?")
+                    has_sent_initial = True
+                    print("[!] LIVE DÉTECTÉ ET VALIDÉ")
             else:
-                if has_sent_uptime:
-                    print("[*] Le stream est hors ligne. Reset pour le prochain live.")
-                    has_sent_uptime = False 
+                has_sent_initial = False
 
-        # Maintien de la connexion (réponse au PING de Twitch)
         try:
             resp = sock.recv(2048).decode('utf-8')
-            if resp.startswith('PING'):
-                sock.send("PONG\n".encode('utf-8'))
-        except socket.timeout:
-            continue
-        except:
-            break
-        
+            if resp.startswith('PING'): sock.send("PONG\n".encode('utf-8'))
+        except: continue
         time.sleep(0.5)
 
 if __name__ == "__main__":
